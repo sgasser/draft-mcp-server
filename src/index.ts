@@ -10,8 +10,6 @@ const server = new McpServer({
   version: "0.1.0",
 });
 
-// ── The one and only tool ──────────────────────────────────────────
-
 server.registerTool(
   "review_draft",
   {
@@ -103,8 +101,6 @@ Examples:
     };
   },
 );
-
-// ── Start ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();

@@ -41,6 +41,7 @@ export function buildReviewHTML(params: {
   <title>Review — ${escapeHtml(title)}</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <style type="text/tailwindcss">
     @theme {
@@ -178,8 +179,8 @@ export function buildReviewHTML(params: {
         },
 
         get preview() {
-          if (this.format === 'md') return marked.parse(this.content);
-          if (this.format === 'html') return this.content;
+          if (this.format === 'md') return DOMPurify.sanitize(marked.parse(this.content));
+          if (this.format === 'html') return DOMPurify.sanitize(this.content);
           return '<pre class="whitespace-pre-wrap font-mono text-sm">' + this.escapeHtml(this.content) + '</pre>';
         },
 
