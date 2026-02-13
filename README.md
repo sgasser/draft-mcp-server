@@ -8,16 +8,9 @@ When your AI assistant writes a PR description, ticket, or message, this MCP ser
 
 ## Setup
 
-```bash
-npm install
-npm run build
-```
-
-Add to your MCP client:
-
 **Claude Code:**
 ```bash
-claude mcp add draft-mcp-server node /path/to/draft-mcp-server/dist/index.js
+claude mcp add draft-mcp-server -- npx draft-mcp-server
 ```
 
 **Claude Desktop** (`claude_desktop_config.json`):
@@ -25,8 +18,8 @@ claude mcp add draft-mcp-server node /path/to/draft-mcp-server/dist/index.js
 {
   "mcpServers": {
     "draft-mcp-server": {
-      "command": "node",
-      "args": ["/path/to/draft-mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["draft-mcp-server"]
     }
   }
 }
