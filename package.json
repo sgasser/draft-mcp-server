@@ -1,0 +1,51 @@
+{
+  "name": "draft-mcp-server",
+  "version": "0.1.0",
+  "description": "Review AI-generated drafts before they go anywhere. MCP server with local review UI.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "draft-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "bun run src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "format": "biome format --write src",
+    "prepublishOnly": "npm run lint && npm run build",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "modelcontextprotocol",
+    "draft",
+    "review",
+    "human-in-the-loop",
+    "claude-code",
+    "github",
+    "linear"
+  ],
+  "author": "Stefan Gasser",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stefangasser/draft-mcp-server.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "open": "^10.2.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
