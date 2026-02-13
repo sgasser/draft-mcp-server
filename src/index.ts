@@ -18,7 +18,8 @@ server.registerTool(
     title: "Review Draft",
     description: `Let the user review and edit a draft before it goes anywhere.
 
-Use this tool when drafting text for the user (PR descriptions, tickets, messages, etc.).
+When creating PR descriptions, Linear tickets, Slack messages, or emails: call this tool first, then use the approved content with the target tool.
+
 Opens a browser window with an editor and live preview. Blocks until the user approves or rejects.
 
 On approve: proceed with the next step (create PR, post ticket, etc.) or copy to clipboard.
