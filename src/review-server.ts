@@ -9,6 +9,7 @@ import { buildReviewHTML } from "./ui.js";
 const ResponseSchema = z.object({
   action: z.enum(["approve", "reject"]),
   content: z.string(),
+  feedback: z.string().optional(),
 });
 
 export interface ReviewParams {
@@ -23,6 +24,7 @@ export interface ReviewResult {
   action: "approve" | "reject";
   content: string;
   edited: boolean;
+  feedback?: string;
 }
 
 export async function openReview(params: ReviewParams): Promise<ReviewResult> {
@@ -68,6 +70,7 @@ export async function openReview(params: ReviewParams): Promise<ReviewResult> {
             action: parsed.data.action,
             content: parsed.data.content,
             edited: parsed.data.content !== params.content,
+            feedback: parsed.data.feedback,
           });
         });
         return;
