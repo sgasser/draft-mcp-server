@@ -77,10 +77,15 @@ Examples:
       content: result.content,
       edited: result.edited,
       next_mcp: mcp ?? null,
+      feedback: result.feedback ?? null,
     };
 
     const statusEmoji = result.action === "approve" ? "✓" : "✗";
     const editNote = result.edited ? " (edited by user)" : "";
+
+    const feedbackLine = result.feedback
+      ? `\n--- User feedback ---\n${result.feedback}\n`
+      : "";
 
     const textSummary = [
       `${statusEmoji} Draft ${result.action}ed${editNote}`,
@@ -89,8 +94,8 @@ Examples:
         ? `→ Proceed with: ${mcp}`
         : result.action === "approve"
           ? "→ Content copied to clipboard"
-          : "→ User rejected the draft, ask what to change",
-      "",
+          : "→ User rejected the draft" + (result.feedback ? ", see feedback below" : ", ask what to change"),
+      feedbackLine,
       "--- Final content ---",
       result.content,
     ].join("\n");

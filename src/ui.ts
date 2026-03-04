@@ -68,6 +68,7 @@ export function buildReviewHTML(params: {
       .prose th { @apply bg-gray-50 font-semibold; }
       .prose input[type="checkbox"] { @apply mr-2 accent-accent; }
       .prose hr { @apply border-t border-gray-200 my-6; }
+      [x-cloak] { display: none !important; }
     }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,9 +76,9 @@ export function buildReviewHTML(params: {
 </head>
 <body class="h-screen flex flex-col bg-gray-50 text-gray-900 font-sans overflow-hidden"
       x-data="reviewApp()"
-      @keydown.meta.enter.window.prevent="submit('approve')"
-      @keydown.ctrl.enter.window.prevent="submit('approve')"
-      @keydown.escape.window.prevent="submit('reject')">
+      @keydown.meta.enter.window.prevent="!showRejectModal && submit('approve')"
+      @keydown.ctrl.enter.window.prevent="!showRejectModal && submit('approve')"
+      @keydown.escape.window.prevent="!showRejectModal && submit('reject')">
 
   <!-- Header -->
   <header class="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0">
@@ -152,6 +153,58 @@ export function buildReviewHTML(params: {
     </div>
   </footer>
 
+  <!-- Reject Modal -->
+  <div x-cloak x-show="showRejectModal"
+       x-transition:enter="transition ease-out duration-150"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-100"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       @keydown.escape.window="closeRejectModal()"
+       class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div x-show="showRejectModal"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.stop
+         class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">What should be changed?</h3>
+        <p class="text-sm text-gray-500 mt-1">Your feedback helps improve the next draft.</p>
+      </div>
+      <div class="p-6">
+        <textarea
+          id="feedbackInput"
+          x-model="feedback"
+          @keydown.meta.enter.prevent="submitReject()"
+          @keydown.ctrl.enter.prevent="submitReject()"
+          placeholder="e.g., Make it shorter, use bullet points, change the tone to be more formal..."
+          rows="4"
+          class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none resize-none"
+        ></textarea>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 flex items-center justify-between">
+        <span class="text-xs text-gray-500 flex items-center gap-1">
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-gray-300 text-[10px] font-mono font-medium shadow-sm">⌘</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-white border border-gray-300 text-[10px] font-mono font-medium shadow-sm">Enter</kbd>
+          <span class="ml-1">to submit</span>
+        </span>
+        <div class="flex items-center gap-2">
+          <button @click="closeRejectModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+            Cancel
+          </button>
+          <button @click="submitReject()" class="px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors">
+            Reject with feedback
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div x-show="toast"
        x-text="toastMsg"
@@ -173,6 +226,8 @@ export function buildReviewHTML(params: {
         format: '${format}',
         hasMcp: ${!!mcp},
         apiBase: 'http://localhost:${port}',
+        showRejectModal: false,
+        feedback: '',
 
         get words() {
           return this.content.trim().split(/\\s+/).filter(Boolean).length;
@@ -199,16 +254,28 @@ export function buildReviewHTML(params: {
           this.showToast('Copied to clipboard');
         },
 
-        async submit(action) {
-          if (action === 'copy' || (action === 'approve' && !this.hasMcp)) {
-            await this.copy();
-            if (action === 'copy') return;
-          }
+        openRejectModal() {
+          this.showRejectModal = true;
+          this.$nextTick(() => {
+            const feedbackInput = document.getElementById('feedbackInput');
+            if (feedbackInput) feedbackInput.focus();
+          });
+        },
 
+        closeRejectModal() {
+          this.showRejectModal = false;
+          this.feedback = '';
+        },
+
+        async submitReject() {
+          await this.sendResponse('reject', this.feedback);
+        },
+
+        async sendResponse(action, feedback = '') {
           await fetch(this.apiBase + '/api/respond', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, content: this.content })
+            body: JSON.stringify({ action, content: this.content, feedback: feedback || undefined })
           });
 
           const isApproved = action === 'approve';
@@ -216,9 +283,24 @@ export function buildReviewHTML(params: {
             <div class="flex flex-col items-center justify-center h-screen gap-4 bg-white">
               <span class="text-5xl \${isApproved ? 'text-green-600' : 'text-red-500'}">\${isApproved ? '✓' : '✗'}</span>
               <span class="text-xl font-semibold">\${isApproved ? 'Done' : 'Cancelled'}</span>
-              <span class="text-sm text-gray-500">You can close this tab</span>
+              <span class="text-sm text-gray-500">Closing...</span>
             </div>
           \`;
+          setTimeout(() => window.close(), 200);
+        },
+
+        async submit(action) {
+          if (action === 'reject') {
+            this.openRejectModal();
+            return;
+          }
+
+          if (action === 'copy' || (action === 'approve' && !this.hasMcp)) {
+            await this.copy();
+            if (action === 'copy') return;
+          }
+
+          await this.sendResponse(action);
         },
 
         init() {
